@@ -61,8 +61,35 @@ a threshold on the number of SDs away from the mean used to define outliers.
 
 ```{r}
 #| label: exercise-1
+#| message: false
+library(tidyverse)
+
+remove_outliers <- function(data, ..., sd_thresh = 3) {
+  vars <- enquos(...)
+  
+  # check variable type
+  for (var in vars) {
+    col <- eval_tidy(var, data)
+    if (!is.numeric(col)) {
+      return(NA)
+    }
+  }
+  
+  keep <- rep(TRUE, nrow(data))
+  for (var in vars) {
+    col <- eval_tidy(var, data)
+    z <- (col - mean(col, na.rm = TRUE)) / sd(col, na.rm = TRUE)
+    keep <- keep & abs(z) <= sd_thresh
+  }
+  
+  return(data[keep, ])
+}
+
+
+
 
 ```
+website I found helpful -> https://rlang.r-lib.org/reference/enquo.html
 
 ## Testing Your Function! 
 
@@ -92,7 +119,7 @@ remove_outliers(diamonds,
 ```
 
 **Exercise 2:** Write a function that imputes missing values for numeric 
-variables in a dataset. The user should be able to supply the dataset, the 
+variables in a data set. The user should be able to supply the data set, the 
 variables to impute values for, and a function to use when imputing. 
 *Hint 1: You will need to use `across()` to apply your function, since the user can input multiple variables.*
 *Hint 2: The `replace_na()` function is helpful here!*
@@ -100,6 +127,9 @@ variables to impute values for, and a function to use when imputing.
 ```{r}
 #| label: exercise-2
 
+impute_missing <- function (data, ..., .f = mean ){
+  vars <- enquos(...)
+}
 
 ```
 

@@ -23,7 +23,11 @@ standardize a numeric vector, but infinite values are left unchanged. Rewrite
 rescale01 <- function(x) {
   rng <- range(x, na.rm = TRUE, finite = TRUE)
   (x - rng[1]) / (rng[2] - rng[1])
+  case_when(x == -Inf ~ 0,
+    x == Inf ~ 1,
+    TRUE ~ scaled)
 }
+
 ```
 
 **Question 2:** Write a function that accepts a vector of birthdates and 
@@ -31,6 +35,18 @@ computes the age of each person in years.
 
 ```{r}
 #| label: question-2
+library(tidyverse)
+library(lubridate)
+
+compute_age <- function(dates){
+  today <- Sys.Date() 
+  age <- as.numeric(difftime(today,
+                             dates,
+                             units = "weeks")) / 52.25
+return(age)
+}
+
+
 
 ```
 
@@ -40,11 +56,31 @@ numeric vector. Feel free to look up the definitions on Wikipedia or elsewhere!
 ```{r}
 #| label: question-3
 
+var_and_skew <- function(vec){
+  n <- length(vec)
+  s <- sd(vec)
+  var <- sum((vec - mean(vec))^2 / (n-1))
+  skew <- sum((vec - mean(vec))^3 / (n-1)*s^3)
+  
+  return(list(variance = var, skewness = skew))
+}
+
+
+
 ```
 
 **Question 4:** Write a function called `both_na()` which takes two vectors of
 the same length and returns the number of positions that have an `NA` in both
 vectors.
+
+```{r}
+
+both_na <- function(vec1, vec2){
+  sum(is.na(vec1) + is.na(vec2))
+}
+
+
+```
 
 ## Data Frame Functions
 
@@ -53,6 +89,28 @@ Exercise 1 or Exercise 2).
 
 ```{r}
 #| label: function-from-lab-2
+
+remove_outliers <- function(data, ..., sd_thresh = 3) {
+  vars <- enquos(...)
+  
+  # check variable type
+  for (var in vars) {
+    col <- eval_tidy(var, data)
+    if (!is.numeric(col)) {
+      return(NA)
+    }
+  }
+  
+  keep <- rep(TRUE, nrow(data))
+  for (var in vars) {
+    col <- eval_tidy(var, data)
+    z <- (col - mean(col)) / sd(col)
+    keep <- keep & abs(z) <= sd_thresh
+  }
+  
+  return(data[keep, ])
+}
+
 
 ```
 
@@ -64,6 +122,11 @@ were cancelled (i.e. `is.na(arr_time)`) or delayed by more than an hour.
 
 ```{r}
 #| label: question-6
+library(nycflights13)
+
+filter_severe <- function(data){
+  severe_data <- filter(is.na(arr_time) | arr_delay > 60)
+}
 
 ```
 
@@ -72,6 +135,13 @@ cancelled flights and the number of flights delayed by more than an hour.
 
 ```{r}
 #| label: question-7
+
+summarize_severe <- function(severe_data){
+  cancelled <- sum(is.na(arr_time))
+  delayed <- nrow(severe_data) - cancelled
+  
+  return(list(cancelled = cancelled, delayed = delayed))
+}
 
 ```
 
@@ -82,6 +152,11 @@ cancelled or delayed.
 ```{r}
 #| label: question-8
 
+severe_modified <- function(data, hours){
+  severe_data <- filter(is.na(arr_time) | arr_delay > hours)
+  
+}
+
 ```
 
 **Question 9:** Write a `summarize_weather()` function that summarizes the
@@ -89,6 +164,14 @@ weather to compute the minimum, mean, and maximum, of a user supplied variable.
 
 ```{r}
 #| label: question-9
+
+summarize_weather <- function(var){
+  min <- min(var)
+  mean <- mean(var)
+  max <- max(var)
+  
+  return(list(minimum = min, mean = mean, maximum = max))
+}
 
 ```
 
@@ -98,6 +181,14 @@ a decimal time (i.e. hours + (minutes / 60)).
 
 ```{r}
 #| label: question-10
+
+standardize_time <- function(time_var){
+  hours <- time_var %/% 100
+  minutes <- time_var %% 100
+  time <- hours + (minutes / 60)
+    
+  return(time)
+}
 
 ```
 
